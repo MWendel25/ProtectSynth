@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PingOne Protect SDK Puppeteer Test</title>
+    <script
+        src="https://apps.pingone.com/signals/web-sdk/5.4.0/signals-sdk.js"
+        defer>
+    </script>
+</head>
+<body>
+    <h1>PingOne Protect SDK Puppeteer Test</h1>
+    <form>
+        <label for="username">Username:</label>
+        <input type="text" id="username" placeholder="Enter username"><br><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" placeholder="Enter password"><br><br>
+        <button type="button" id="submit">Submit</button>
+    </form>
+
+    <script>
+        function onPingOneSignalsReady(callback) {
+            if (window['_pingOneSignalsReady']) {
+                callback();
+            } else {
+                document.addEventListener('PingOneSignalsReadyEvent', callback);
+            }
+        }
+
+        async function initializeSDK() {
+            return new Promise((resolve, reject) => {
+                onPingOneSignalsReady(() => {
+                    _pingOneSignals.init({
+                        // Optional configurations:
+                        behavioralDataCollection: true,
+                        // disableTags: true,
+                        universalDeviceIdentification: false
+                    }).then(() => {
+                        console.log("PingOne Signals initialized successfully");
+                        resolve("SDK initialized successfully");
+                    }).catch((e) => {
+                        console.error("SDK initialization failed:", e);
+                        reject("SDK initialization failed");
+                    });
+                });
+            });
+        }
+
+        async function generateFingerprint() {
+            try {
+                const fingerprintData = await _pingOneSignals.getData();
+                console.log("Fingerprint data:", fingerprintData);
+                return fingerprintData;
+            } catch (e) {
+                console.error("Error generating fingerprint data:", e);
+                throw e;
+            }
+        }
+    </script>
+</body>
+</html>

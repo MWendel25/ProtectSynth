@@ -1,0 +1,59 @@
+{
+    "event": {
+      "completionStatus": "IN_PROGRESS",
+      "targetResource": {
+        "id": "15fa85c0742a8be144a703f6b14b2888",
+        "name": "RiskMFAScoring"
+      },
+      "inducerisk": "{LOW_RISK}",
+      "ip": "{IP}",
+      "flow": {
+        "type": "AUTHENTICATION"
+      },
+      "session": {
+        "id": "002b1094-9676-42c3-9f4f-56ef112c6918"
+      },
+      "user": {
+        "id": "{MAIL}",
+        "name": "{NAME}",
+        "type": "EXTERNAL",
+        "email": "{MAIL}",
+        "newEntry": "{NEW_ENTRY}",
+        "groups": [
+          {
+            "name": "seasonal"
+          },
+          {
+            "name": "yellow"
+          }
+        ]
+      },
+      "sharingType": "SHARED",
+      "browser": {
+        "userAgent": "{AGENT}",
+        "platform": "{PLATFORM}",
+        "plugins": [
+          [
+            "Chrome PDF Plugin",
+            "Portable Document Format",
+            [
+              "application x-google-chrome-pdf",
+              "pdf"
+            ]
+          ],
+          [
+            "Chrome PDF Viewer",
+            [
+              "application x-google-chrome-pdf",
+              "pdf"
+            ]
+          ]
+        ]
+      },
+      "origin": "{APP}"
+    },
+    "riskPolicySet": {
+      "id": "{RISK_POLICY_ID}"
+    }
+  }
+  

@@ -1,0 +1,16 @@
+# Ignore node_modules (dependencies)
+node_modules/
+
+# Ignore environment files (sensitive data)
+.env
+
+# Ignore user profile data
+data/user_profiles.json
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore logs and cache
+npm-debug.log
+yarn-error.log

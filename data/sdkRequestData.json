@@ -1,0 +1,32 @@
+{
+    "event": {
+        "completionStatus": "IN_PROGRESS",
+        "targetResource": {
+            "id": "3a2a9694-31e2-4407-848b-ccfe5455c3b6",
+            "name": "ProtectSynth"
+        },
+        "inducerisk": "{LOW_RISK}",
+        "ip": "{IP}",
+        "device": {
+            "externalId": "{DEVICE_ID}"
+        },
+        "sdk": {
+            "signals": {
+                "data": "{FINGERPRINT}"
+            }
+        },
+        "flow": {
+            "type": "AUTHENTICATION"
+        },
+        "user": {
+            "name": "{USER_ID}",
+            "type": "PING_ONE"
+        },
+        "browser": {
+            "userAgent": "{AGENT}"
+        }
+    },
+    "riskPolicySet": {
+        "id": "{RISK_POLICY_ID}"
+    }
+}

@@ -1,0 +1,15 @@
+{
+    "version": "1.1.0",
+    "configurations": [
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "Launch Program",
+        "skipFiles": ["<node_internals>/**"],
+        "program": "${file}",
+        "runtimeExecutable": "/Users/mattwendel/.nvm/versions/node/v21.6.2/bin/node",
+        "console": "integratedTerminal"
+      }
+    ]
+  }
+  
