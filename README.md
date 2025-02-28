@@ -20,6 +20,7 @@ Additionally, the script provides options to introduce **randomized behavior** u
 - **`INCLUDE_BADACTORS`**: At a 20% interval, assigns a bad IP address to the user. *(This interval can be adjusted at **line 533** in `sendData.js`.)*
 - **`INCLUDE_SUSPICIOUS_DEVICE`**: At a 20% interval, alters browser fingerprints to generate a suspicious device profile. *(This interval can be adjusted at **line 278** in `sendData.js`.)*
 - **`INCLUDE_SDK`**: If set to `false`, the script will send data **without** generating browser signals, allowing for direct data injection without behavioral tracking.
+- **`FORCED_RISK_LEVEL`**: Controls risk levels assigned to users. When set to `LOW`, `MEDIUM`, or `HIGH`, it forces that risk level. If set to `"true"`, a random risk level is assigned per request. If `"false"`, the `inducerisk` field is removed. *(This logic is handled dynamically in `sendData.js`.)*
 
 ⚠ **Note:** This logic does **not** fool the **Bot Detected Predictor**. When utilizing this tool, it is recommended to leave this predictor **off** your policy.
 
@@ -68,6 +69,7 @@ Ensure you have the necessary environment variables configured in a `.env` file:
 | `DEBUG` | Enables debugging mode for logging additional information, such as the POST and PUT information from each Protect call. | `true` / `false` |
 | `INCLUDE_SDK` | Determines if the SDK should be included in requests. If false, all the information will be sent simply without the signals generated. | `true` / `false` |
 | `PROCESS_USERS_SEQUENTIALLY` | If `true`, processes users sequentially rather than randomly, ensuring each user is used for the specified number of runs. | `true` / `false` |
+| `FORCED_RISK_LEVEL` | Controls risk levels assigned to users. Acceptable values: `LOW`, `MEDIUM`, `HIGH`, or `"true"` for random per request. If `"false"`, `inducerisk` is removed from the request. | `"LOW"`, `"MEDIUM"`, `"HIGH"`, `"true"`, `"false"` |
 
 Here is an example of an .env file
 ```
@@ -82,6 +84,7 @@ NUMBER_OF_CONCURRENT_RUNS=INT #Recommended around 20 - 40
 DEBUG=boolean
 INCLUDE_SDK=boolean
 PROCESS_USERS_SEQUENTIALLY=boolean
+FORCED_RISK_LEVEL=LOW | MEDIUM | HIGH | true | false
 ```
 
 ### **Modifying User Type in Requests**

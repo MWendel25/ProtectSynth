@@ -2,10 +2,10 @@
     "event": {
         "completionStatus": "IN_PROGRESS",
         "targetResource": {
-            "id": "3a2a9694-31e2-4407-848b-ccfe5455c3b6",
+            "id": "{CLIENT_ID}",
             "name": "ProtectSynth"
         },
-        "inducerisk": "{LOW_RISK}",
+        "inducerisk": "{FORCED_RISK_LEVEL}",
         "ip": "{IP}",
         "device": {
             "externalId": "{DEVICE_ID}"

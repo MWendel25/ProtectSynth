@@ -217,277 +217,18 @@ const updateRiskEvaluation = async (token, riskEvalID) => {
   }
 };
 
-// Function to determine the low risk value
-const determineLowRisk = () => {
-  const forceLow = Math.floor(Math.random() * 10) + 1;
-  const lowRatio = parseInt(process.env.LOWRATIO, 10);
+// Determine risk level based on FORCED_RISK_LEVEL
+let riskLevel = process.env.FORCED_RISK_LEVEL;
 
-  return forceLow > lowRatio ? 'LabLow' : 'NA';
-};
-
-const generateFingerprint2 = async (username) => {
-  const isDebug = process.env.DEBUG === 'true';
-
-  // ✅ Get the real Chrome version
-  const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'; // MacOS
-  const browser = await puppeteer.launch({
-    headless: false, // ✅ Ensure non-headless mode
-    executablePath: chromePath, // ✅ Match real Chrome version
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-blink-features=AutomationControlled',
-      '--disable-infobars',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--disable-gpu',
-      '--window-size=1280,800',
-      isDebug ? '--start-maximized' : '--window-position=9999,9999', // ✅ Hide window in non-debug mode
-    ],
-    defaultViewport: isDebug ? null : { width: 1280, height: 800 }, // ✅ Hide viewport in silent mode
-  });
-
-  const page = await browser.newPage();
-
-  // ✅ Fetch the real User-Agent
-  const realUserAgent = await page.evaluate(() => navigator.userAgent);
-  await page.setUserAgent(realUserAgent); // ✅ Set it explicitly
-
-  // ✅ Fully align browser properties with the User-Agent
-  await page.evaluateOnNewDocument((userAgent) => {
-    Object.defineProperty(navigator, 'webdriver', { get: () => false }); // ✅ Hide Puppeteer
-    Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
-    Object.defineProperty(navigator, 'platform', { get: () => 'MacIntel' }); // ✅ Mimic MacOS
-    Object.defineProperty(navigator, 'deviceMemory', { get: () => 8 });
-    Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
-    Object.defineProperty(navigator, 'userAgent', { get: () => userAgent });
-
-    // ✅ Ensure navigator properties fully match the browser
-    Object.defineProperty(navigator, 'vendor', { get: () => 'Google Inc.' });
-    Object.defineProperty(navigator, 'productSub', { get: () => '20030107' });
-    Object.defineProperty(navigator, 'appVersion', { get: () => userAgent });
-
-    // ✅ Spoof WebGL settings (Prevents "GPU Inconsistency")
-    const getParameter = WebGLRenderingContext.prototype.getParameter;
-    WebGLRenderingContext.prototype.getParameter = function (parameter) {
-      if (parameter === 37445) return 'Intel Inc.';
-      if (parameter === 37446) return 'Intel(R) Iris(TM) Graphics 6100';
-      return getParameter(parameter);
-    };
-
-    // ✅ Disable WebRTC leaking real IPs (Prevents "WebRTC Anomaly")
-    Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 1 });
-    Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
-    Object.defineProperty(navigator, 'mimeTypes', { get: () => [1, 2, 3] });
-
-    // ✅ Ensure fonts match real systems
-    Object.defineProperty(document, 'fonts', {
-      get: () => ['Arial', 'Helvetica', 'Times New Roman']
-    });
-
-    // ✅ Simulate real user interactions to avoid detection
-    document.addEventListener('mousemove', () => { }, true);
-    document.addEventListener('mousedown', () => { }, true);
-    document.addEventListener('mouseup', () => { }, true);
-    document.addEventListener('keydown', () => { }, true);
-    document.addEventListener('keyup', () => { }, true);
-  }, realUserAgent);
-
-  try {
-    logDebug('Loading test.html...');
-    const htmlPath = `file://${path.resolve(__dirname, '../test.html')}`;
-    await page.goto(htmlPath, { waitUntil: 'networkidle0' });
-
-    logDebug('Initializing SDK...');
-    const sdkInitialized = await page.evaluate(async () => {
-      try {
-        return await initializeSDK();
-      } catch (error) {
-        throw new Error(`SDK Initialization Error: ${error.message}`);
-      }
-    });
-
-    logDebug('SDK Initialization Status:', sdkInitialized);
-
-    logDebug('Waiting for the username field...');
-    await page.waitForSelector('#username', { timeout: 60000 });
-
-    const cursor = createCursor(page)
-
-    // Interact with the username field
-    await cursor.move('#username');
-    await cursor.click();
-    await page.type('#username', username, { delay: randomDelay() });
-
-    // Interact with the password field
-    await cursor.move('#password');
-    await cursor.click();
-    await page.type('#password', '2FederateMore!', { delay: randomDelay() });
-
-    // Click the submit button
-    await cursor.move('#submit');
-    await cursor.click();
-
-    logDebug('Simulated interaction complete.');
-
-    // Generate fingerprint data
-    logDebug('Generating fingerprint...');
-    const fingerprintData = await page.evaluate(async () => {
-      return await _pingOneSignals.getData();
-    });
-
-    // logDebug('Fingerprint Data:', fingerprintData);
-    console.log('Fingerprint Data:', fingerprintData);
-
-    await browser.close();
-
-    return fingerprintData;
-  } catch (err) {
-    console.error('Error during Puppeteer fingerprint generation:', err.message);
-    await browser.close();
-    throw err;
+// ✅ If FORCED_RISK_LEVEL is true, generate a new risk level per request
+const getRiskLevelForRequest = () => {
+  if (process.env.FORCED_RISK_LEVEL === 'true') {
+    const riskLevels = ['LOW', 'MEDIUM', 'HIGH'];
+    const selectedRisk = riskLevels[Math.floor(Math.random() * riskLevels.length)];
+    // console.log(`🔍 Selected Risk Level: ${selectedRisk}`); // ✅ Debugging output
+    return selectedRisk;
   }
-};
-
-const generateFingerprintWorking = async (username) => {
-  const isDebug = process.env.DEBUG === 'true';
-  const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'; // MacOS
-
-  const browser = await puppeteer.launch({
-    headless: false,
-    executablePath: chromePath,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-blink-features=AutomationControlled',
-      '--disable-infobars',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--disable-gpu',
-      '--window-size=1280,800',
-      // isDebug ? '--start-maximized' : '--window-position=9999,9999',
-      isDebug ? '--start-maximized' : '',
-    ],
-    defaultViewport: isDebug ? null : { width: 1280, height: 800 },
-  });
-
-  const page = await browser.newPage();
-  const realUserAgent = await page.evaluate(() => navigator.userAgent);
-  await page.setUserAgent(realUserAgent);
-
-  // ✅ Detect M1/M2/M3 (ARM) vs Intel Mac
-  const isAppleSilicon = process.arch === 'arm64'; // Check if running on M1/M2/M3
-
-
-
-  await page.evaluateOnNewDocument((userAgent, isAppleSilicon) => {
-    Object.defineProperty(navigator, 'webdriver', { get: () => false });
-    Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
-
-    // ✅ Correct architecture detection: Mac for ARM, MacIntel for Intel
-    Object.defineProperty(navigator, 'platform', { get: () => isAppleSilicon ? 'Mac' : 'MacIntel' });
-
-    Object.defineProperty(navigator, 'deviceMemory', { get: () => 8 });
-    Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
-    Object.defineProperty(navigator, 'vendor', { get: () => 'Apple' });
-    // Object.defineProperty(navigator, 'productSub', { get: () => '20030107' });
-
-    // ✅ Spoof WebGL properties to avoid GPU detection mismatches
-    const getParameter = WebGLRenderingContext.prototype.getParameter;
-    WebGLRenderingContext.prototype.getParameter = function (parameter) {
-      if (parameter === 37445) return 'Apple Inc.'; // ✅ Corrected for M1 Mac
-      if (parameter === 37446) return 'Apple M1'; // ✅ Use "Apple M1" instead of Intel GPU
-      return getParameter(parameter);
-    };
-
-    // ✅ Disable WebRTC leaking real IPs
-    Object.defineProperty(navigator, 'maxTouchPoints', { get: () => 1 });
-    Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
-    Object.defineProperty(navigator, 'mimeTypes', { get: () => [1, 2, 3] });
-
-    // ✅ Mimic real system fonts
-    Object.defineProperty(document, 'fonts', {
-      get: () => ['Arial', 'Helvetica', 'Times New Roman']
-    });
-
-    // ✅ Simulate real user interactions
-    document.addEventListener('mousemove', () => { }, true);
-    document.addEventListener('mousedown', () => { }, true);
-    document.addEventListener('mouseup', () => { }, true);
-    document.addEventListener('keydown', () => { }, true);
-    document.addEventListener('keyup', () => { }, true);
-  }, realUserAgent, isAppleSilicon);
-
-  try {
-    logDebug('Loading test.html...');
-    const htmlPath = `file://${path.resolve(__dirname, '../test.html')}`;
-    await page.goto(htmlPath, { waitUntil: 'networkidle0' });
-
-    // ✅ Wait for SDK to be ready
-    await page.evaluate(async () => {
-      await new Promise((resolve) => {
-        function checkSDK() {
-          if (typeof _pingOneSignals !== 'undefined' && _pingOneSignals.init) {
-            resolve();
-          } else {
-            setTimeout(checkSDK, 500);
-          }
-        }
-        checkSDK();
-      });
-    });
-
-    logDebug('Initializing SDK...');
-    await page.evaluate(async () => {
-      if (typeof initializeSDK === 'function') {
-        return await initializeSDK();
-      } else {
-        throw new Error("SDK Initialization function not found");
-      }
-    });
-
-    logDebug('SDK Initialization Complete.');
-
-    await page.waitForSelector('#username', { timeout: 60000 });
-
-    const cursor = createCursor(page);
-    await cursor.move('#username');
-    await cursor.click();
-
-    await sleep(1000); // ✅ Replaced waitForTimeout
-
-    await typeLikeHuman(page, '#username', username);
-
-    await cursor.move('#password');
-    await cursor.click();
-
-    await sleep(1000); // ✅ Replaced waitForTimeout
-
-    await typeLikeHuman(page, '#password', '2FederateMore!');
-
-    await cursor.move('#submit');
-    await cursor.click();
-
-    logDebug('Simulated interaction complete.');
-
-    // ✅ Fix: Ensure _pingOneSignals.getData() is properly called within the browser context
-    const fingerprintData = await page.evaluate(async () => {
-      if (typeof _pingOneSignals !== 'undefined' && _pingOneSignals.getData) {
-        return await _pingOneSignals.getData();
-      } else {
-        throw new Error("PingOne Signals SDK is not loaded or getData() is undefined.");
-      }
-    });
-
-    // console.log('Fingerprint Data:', fingerprintData);
-
-    await browser.close();
-    return fingerprintData;
-  } catch (err) {
-    console.error('❌ Error during Puppeteer fingerprint generation:', err.message);
-    await browser.close();
-    throw err;
-  }
+  return riskLevel; // ✅ Uses the fixed value if set to LOW, MEDIUM, or HIGH
 };
 
 const generateFingerprint = async (username) => {
@@ -532,11 +273,11 @@ const generateFingerprint = async (username) => {
     // ✅ Ensure userAgent and userAgentData are overridden
     Object.defineProperty(navigator, 'userAgent', { get: () => userAgent });
     Object.defineProperty(navigator, 'userAgentData', {
-        get: () => ({
-            brands: [{ brand: "Google Chrome", version: "120" }, { brand: "Chromium", version: "120" }, { brand: "Not A;Brand", version: "99" }],
-            mobile: false,
-            platform: "MacOS"
-        })
+      get: () => ({
+        brands: [{ brand: "Google Chrome", version: "120" }, { brand: "Chromium", version: "120" }, { brand: "Not A;Brand", version: "99" }],
+        mobile: false,
+        platform: "MacOS"
+      })
     });
 
     // 🎲 20% Chance to Trigger a Suspicious Device
@@ -544,16 +285,16 @@ const generateFingerprint = async (username) => {
 
     // ✅ Spoof navigator.platform dynamically
     const suspiciousPlatforms = ["Linux", "Win32"];
-    const fakePlatform = shouldUseSuspiciousDevice 
-        ? suspiciousPlatforms[Math.floor(Math.random() * suspiciousPlatforms.length)] 
-        : (isAppleSilicon ? "Mac" : "MacIntel");
+    const fakePlatform = shouldUseSuspiciousDevice
+      ? suspiciousPlatforms[Math.floor(Math.random() * suspiciousPlatforms.length)]
+      : (isAppleSilicon ? "Mac" : "MacIntel");
 
     Object.defineProperty(navigator, 'platform', { get: () => fakePlatform });
 
     // ✅ Modify existing fakeHardwareConcurrency instead of redeclaring it
     if (shouldUseSuspiciousDevice) {
-        fakeHardwareConcurrency = Math.random() > 0.5 ? 32 : 64; // 🎲 50% 32 cores, 50% 64 cores
-        fakeDeviceMemory = Math.random() > 0.5 ? 128 : 256; // 🎲 50% 128GB, 50% 256GB
+      fakeHardwareConcurrency = Math.random() > 0.5 ? 32 : 64; // 🎲 50% 32 cores, 50% 64 cores
+      fakeDeviceMemory = Math.random() > 0.5 ? 128 : 256; // 🎲 50% 128GB, 50% 256GB
     }
 
     Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => fakeHardwareConcurrency });
@@ -562,26 +303,26 @@ const generateFingerprint = async (username) => {
 
     // ✅ Spoof WebGL Vendor/Renderer
     if (shouldUseSuspiciousDevice) {
-        fakeGPU = Math.random() > 0.5 ? 'NVIDIA GeForce RTX 4090' : 'AMD Radeon RX 7900 XTX';
+      fakeGPU = Math.random() > 0.5 ? 'NVIDIA GeForce RTX 4090' : 'AMD Radeon RX 7900 XTX';
     }
 
     const getParameter = WebGLRenderingContext.prototype.getParameter;
     WebGLRenderingContext.prototype.getParameter = function (parameter) {
-        if (parameter === 37445) return 'Apple Inc.'; 
-        if (parameter === 37446) return fakeGPU; 
-        return getParameter(parameter);
+      if (parameter === 37445) return 'Apple Inc.';
+      if (parameter === 37446) return fakeGPU;
+      return getParameter(parameter);
     };
 
     // ✅ Spoof WebGL Unmasked Vendor/Renderer
     const debugInfo = WebGLRenderingContext.prototype.getExtension;
     WebGLRenderingContext.prototype.getExtension = function (name) {
-        if (name === 'WEBGL_debug_renderer_info') {
-            return {
-                UNMASKED_VENDOR_WEBGL: 37445,
-                UNMASKED_RENDERER_WEBGL: 37446
-            };
-        }
-        return debugInfo(name);
+      if (name === 'WEBGL_debug_renderer_info') {
+        return {
+          UNMASKED_VENDOR_WEBGL: 37445,
+          UNMASKED_RENDERER_WEBGL: 37446
+        };
+      }
+      return debugInfo(name);
     };
 
     // ✅ Block WebRTC Leaks
@@ -591,30 +332,30 @@ const generateFingerprint = async (username) => {
 
     // ✅ Block WebRTC leaking real IPs
     Object.defineProperty(navigator, 'mediaDevices', {
-        get: () => ({
-            enumerateDevices: async () => shouldUseSuspiciousDevice
-                ? [
-                    { kind: 'videoinput', label: 'Suspicious Webcam 9000', deviceId: 'fake-webcam' },
-                    { kind: 'audioinput', label: 'Suspicious Microphone', deviceId: 'fake-mic' },
-                    { kind: 'audiooutput', label: 'Suspicious Speaker', deviceId: 'fake-speaker' }
-                ]
-                : []
-        })
+      get: () => ({
+        enumerateDevices: async () => shouldUseSuspiciousDevice
+          ? [
+            { kind: 'videoinput', label: 'Suspicious Webcam 9000', deviceId: 'fake-webcam' },
+            { kind: 'audioinput', label: 'Suspicious Microphone', deviceId: 'fake-mic' },
+            { kind: 'audiooutput', label: 'Suspicious Speaker', deviceId: 'fake-speaker' }
+          ]
+          : []
+      })
     });
 
     // ✅ Spoof Timezone with Random Selection (Only 20% of the time)
     const suspiciousTimezones = [
-        'Pacific/Kiritimati', // GMT+14 (Most advanced timezone)
-        'Asia/Kathmandu',      // GMT+5:45 (Only timezone with a 45-minute offset)
-        'Antarctica/Troll',    // GMT+2 (Used in Antarctica)
-        'Africa/Ouagadougou',  // GMT+0 (Less common but legitimate)
-        'Indian/Chagos',       // GMT+6 (Small islands in Indian Ocean)
-        'Asia/Pyongyang',      // GMT+8.5 (North Korea, unique offset)
-        'Pacific/Niue'         // GMT-11 (Near last timezone of the day)
+      'Pacific/Kiritimati', // GMT+14 (Most advanced timezone)
+      'Asia/Kathmandu',      // GMT+5:45 (Only timezone with a 45-minute offset)
+      'Antarctica/Troll',    // GMT+2 (Used in Antarctica)
+      'Africa/Ouagadougou',  // GMT+0 (Less common but legitimate)
+      'Indian/Chagos',       // GMT+6 (Small islands in Indian Ocean)
+      'Asia/Pyongyang',      // GMT+8.5 (North Korea, unique offset)
+      'Pacific/Niue'         // GMT-11 (Near last timezone of the day)
     ];
     const randomTimezone = suspiciousTimezones[Math.floor(Math.random() * suspiciousTimezones.length)];
     Object.defineProperty(Intl.DateTimeFormat.prototype, 'resolvedOptions', {
-        get: () => () => ({ timeZone: shouldUseSuspiciousDevice ? randomTimezone : 'America/New_York' })
+      get: () => () => ({ timeZone: shouldUseSuspiciousDevice ? randomTimezone : 'America/New_York' })
     });
 
     // ✅ Spoof screen properties
@@ -631,10 +372,10 @@ const generateFingerprint = async (username) => {
 
     // 🔥 Debugging: Log when suspicious device mode is triggered
     if (shouldUseSuspiciousDevice) {
-        console.log("⚠️ Spoofing suspicious device fingerprint!");
+      console.log("⚠️ Spoofing suspicious device fingerprint!");
     }
 
-}, realUserAgent, isAppleSilicon, fakeHardwareConcurrency, fakeDeviceMemory, fakeGPU, includeSuspiciousDevice);
+  }, realUserAgent, isAppleSilicon, fakeHardwareConcurrency, fakeDeviceMemory, fakeGPU, includeSuspiciousDevice);
 
   try {
     logDebug('Loading test.html...');
@@ -813,11 +554,12 @@ const main = async () => {
           NAME: userProfile.name,
           MAIL: userProfile.email,
           AGENT: userProfile.agent,
-          LOW_RISK: determineLowRisk(),
+          FORCED_RISK_LEVEL: getRiskLevelForRequest(),
           FINGERPRINT: fingerprintData || '',
           USER_ID: username,
           DEVICE_ID: userProfile.deviceID,
           RISK_POLICY_ID: process.env.RISK_POLICY_ID,
+          CLIENT_ID: process.env.CLIENT_ID,
         };
 
         logDebug('Replacements:', replacements);
