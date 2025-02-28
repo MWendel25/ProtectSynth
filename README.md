@@ -55,10 +55,10 @@ Ensure you have the necessary environment variables configured in a `.env` file:
 
 | Variable | Description | Example Value |
 |----------|------------|--------------|
-| `ENVID` | The PingOne environment ID with PingOne. | `"yourEnvID"` |
-| `CLIENT_ID` | The client ID for the PingOne Worker Application. | `"yourClientID"` |
-| `CLIENT_SECRET` | The client secret for the PingOne Worker Application. | `"yourClientSecret"` |
-| `RISK_POLICY_ID` | The ID of the risk policy being applied. | `"yourRiskPolicyId"` |
+| `ENVID` | The PingOne environment ID with PingOne. | `"12345678-123A-1234-5678-1ab2c3def4567"` |
+| `CLIENT_ID` | The client ID for the PingOne Worker Application. | `"abcdefg1-a123-12b3-ab1c-12345ab6c7d8"` |
+| `CLIENT_SECRET` | The client secret for the PingOne Worker Application. | `"A123bCD_Efgh45ij6_KL7M~no8-Pq9S0T12UVwX3Yz4aBCD5efG-HiJkLMNOPQR6"` |
+| `RISK_POLICY_ID` | The ID of the risk policy being applied. | `"1ab23c4d-e5ff-678g-901h-ij2kl34567m"` |
 | `INCLUDE_BADACTORS` | Whether to include simulated bad actors in the dataset. When true this sends in a bad IP address 20% of the time. | `true` / `false` |
 | `INCLUDE_SUSPICIOUS_DEVICE` | Whether to include simulated suspicious devices in the dataset. When true this sends in a suspicious devices 20% of the time. | `true` / `false` |
 | `NUMBER_OF_TOTAL_RUNS` | Total number of runs to be executed. | `1000` |
