@@ -21,6 +21,8 @@ Additionally, the script provides options to introduce **randomized behavior** u
 - **`INCLUDE_SUSPICIOUS_DEVICE`**: At a 20% interval, alters browser fingerprints to generate a suspicious device profile. *(This interval can be adjusted at **line 278** in `sendData.js`.)*
 - **`INCLUDE_SDK`**: If set to `false`, the script will send data **without** generating browser signals, allowing for direct data injection without behavioral tracking.
 
+⚠ **Note:** This logic does **not** fool the **Bot Detected Predictor**. When utilizing this tool, it is recommended to leave this predictor **off** your policy.
+
 ProtectSynth is built using **Node.js** and supports various integrations for efficient data processing.
 
 ## Installation
