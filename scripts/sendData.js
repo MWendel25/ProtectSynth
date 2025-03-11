@@ -218,7 +218,7 @@ const updateRiskEvaluation = async (token, riskEvalID) => {
 };
 
 // Determine risk level based on FORCED_RISK_LEVEL
-let riskLevel = process.env.FORCED_RISK_LEVEL;
+// let riskLevel = process.env.FORCED_RISK_LEVEL;
 
 // ✅ If FORCED_RISK_LEVEL is true, generate a new risk level per request
 const getRiskLevelForRequest = () => {
@@ -549,6 +549,20 @@ const main = async () => {
           fingerprintData = await generateFingerprint(username);
         }
 
+         // Determine risk level based on FORCED_RISK_LEVEL
+         let riskLevel = process.env.FORCED_RISK_LEVEL;
+
+         // ✅ If FORCED_RISK_LEVEL is true, generate a new risk level per request
+         const getRiskLevelForRequest = () => {
+           if (process.env.FORCED_RISK_LEVEL === 'true') {
+             const riskLevels = ['LOW', 'MEDIUM', 'HIGH'];
+             const selectedRisk = riskLevels[Math.floor(Math.random() * riskLevels.length)];
+             // console.log(`🔍 Selected Risk Level: ${selectedRisk}`); // ✅ Debugging output
+             return selectedRisk;
+           }
+           return riskLevel; // ✅ Uses the fixed value if set to LOW, MEDIUM, or HIGH
+         };
+
         const replacements = {
           IP: eventIp,
           NAME: userProfile.name,
@@ -565,6 +579,12 @@ const main = async () => {
         logDebug('Replacements:', replacements);
 
         const requestData = await loadRequestData(path.join(__dirname, '../data/sdkRequestData.json'), replacements);
+
+        // ✅ Ensure requestData is a string before applying `.replace()`
+        if (riskLevel === "false") {
+          delete requestData.event.inducerisk; // ✅ Removes the field if requestData is an object
+          // console.log("requestData", requestData)
+        }
 
         const riskEvalID = await sendRequest(token, requestData); // POST request
         if (!riskEvalID) {
