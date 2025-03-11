@@ -593,7 +593,7 @@ const main = async () => {
         }
 
         await updateRiskEvaluation(token, riskEvalID);
-        console.log(`✅ Processed user: ${username}`);
+        console.log(`✅ Processed user: ${username} - Risk EvalId: ${riskEvalID}`);
       } catch (err) {
         console.error(`❌ Error processing ${username}:`, err.message);
       }
