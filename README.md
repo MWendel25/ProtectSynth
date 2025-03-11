@@ -22,7 +22,8 @@ Additionally, the script provides options to introduce **randomized behavior** u
 - **`INCLUDE_SDK`**: If set to `false`, the script will send data **without** generating browser signals, allowing for direct data injection without behavioral tracking.
 - **`FORCED_RISK_LEVEL`**: Controls risk levels assigned to users. When set to `LOW`, `MEDIUM`, or `HIGH`, it forces that risk level. If set to `"true"`, a random risk level is assigned per request. If `"false"`, the `inducerisk` field is removed. *(This logic is handled dynamically in `sendData.js`.)*
 
-⚠ **Note:** This logic does **not** fool the **Bot Detected Predictor**. When utilizing this tool, it is recommended to leave this predictor **off** your policy.
+## Limitations
+- ⚠ **Bot Detection Limitation**: This logic does **not** fool the **Bot Detected Predictor**. When utilizing this tool, it is recommended to leave this predictor **off** your policy.
 
 ProtectSynth is built using **Node.js** and supports various integrations for efficient data processing.
 
@@ -52,6 +53,25 @@ To integrate ProtectSynth with PingOne, follow these steps to create a **Worker 
 5. Add the following roles to the worker app:   Application Owner (your P1 ENV), Identity Data Admin (your P1 ENV)
 6. Save the application and copy the **Client ID** and **Client Secret** for later use.
 7. Ensure your application has the necessary permissions to access APIs.
+
+## Setting Up FORCED_RISK_LEVEL
+To properly configure and use the `FORCED_RISK_LEVEL` variable in ProtectSynth, follow these steps:
+
+1. **Log in to PingOne** and navigate to **Predictors** under **Threat Protect**.
+2. Click **+ Predictors** and select **Custom**.
+3. Provide a readable **Display Name** and **Compact Name**.
+4. For **Attribute Mapping**, provide the following details: `${event.inducerisk}`.
+5. Set the **Risk Level Mapping** to a List Item and configure:
+   - Set `LOW` to the **Low** score.
+   - Set `MEDIUM` to the **Medium** score.
+   - Set `HIGH` to the **High** score.
+6. Save the Predictor.
+7. Navigate to **Risk Policies**.
+8. In the policy you are utilizing, select **+ ADD Rule** under **Override** at the bottom.
+9. Provide three rules:
+   - If **Induce Risk Score** is `HIGH`, then **Return HIGH**.
+   - If **Induce Risk Score** is `LOW`, then **Return LOW**.
+   - If **Induce Risk Score** is `MEDIUM`, then **Return MEDIUM**.
 
 ## Configuration
 Ensure you have the necessary environment variables configured in a `.env` file:
