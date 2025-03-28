@@ -24,6 +24,7 @@ Additionally, the script provides options to introduce **randomized behavior** u
 
 ## Limitations
 - ⚠ **Bot Detection Limitation**: This logic does **not** fool the **Bot Detected Predictor**. When utilizing this tool, it is recommended to leave this predictor **off** your policy.
+- ⚠ **Suspicious Device Limitation**: This logic does **not** currently sign the SDK Payload. When utilizing this tool, it is recommended to leave **Signed SDK Payload is Required** **disabled** on your predictor.
 
 ProtectSynth is built using **Node.js** and supports various integrations for efficient data processing.
 
