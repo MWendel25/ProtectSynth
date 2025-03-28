@@ -182,13 +182,16 @@ const sendRequest = async (token, requestData) => {
     logDebug('Response:', response.data);
 
     // Extract and return the RiskEvalID
-    return response.data?.id || null;
+    return {
+      id: response.data?.id || null,
+      level: response.data?.result?.level || 'UNKNOWN'
+    };
   } catch (error) {
     console.error(
       'Error sending the request:',
       error.response ? error.response.data : error.message
     );
-    return null;
+    return { id: null, level: 'ERROR' };
   }
 };
 
@@ -215,20 +218,6 @@ const updateRiskEvaluation = async (token, riskEvalID) => {
     );
     return null;
   }
-};
-
-// Determine risk level based on FORCED_RISK_LEVEL
-// let riskLevel = process.env.FORCED_RISK_LEVEL;
-
-// ✅ If FORCED_RISK_LEVEL is true, generate a new risk level per request
-const getRiskLevelForRequest = () => {
-  if (process.env.FORCED_RISK_LEVEL === 'true') {
-    const riskLevels = ['LOW', 'MEDIUM', 'HIGH'];
-    const selectedRisk = riskLevels[Math.floor(Math.random() * riskLevels.length)];
-    // console.log(`🔍 Selected Risk Level: ${selectedRisk}`); // ✅ Debugging output
-    return selectedRisk;
-  }
-  return riskLevel; // ✅ Uses the fixed value if set to LOW, MEDIUM, or HIGH
 };
 
 const generateFingerprint = async (username) => {
@@ -503,6 +492,7 @@ const main = async () => {
     const includeSDK = process.env.INCLUDE_SDK === 'true';
     const badActors = process.env.INCLUDE_BADACTORS === 'true';
     const processSequentially = process.env.PROCESS_USERS_SEQUENTIALLY === 'true'; // ✅ New control variable
+    const evaluationLevelStats = { LOW: 0, MEDIUM: 0, HIGH: 0, UNKNOWN: 0, ERROR: 0 };
 
     // ✅ Determine which user set to use
     const userSource = process.env.USER_SOURCE === 'external' ? 'external_Users' : 'internal_Users';
@@ -598,7 +588,13 @@ const main = async () => {
           // console.log("requestData", requestData)
         }
 
-        const riskEvalID = await sendRequest(token, requestData); // POST request
+        const { id: riskEvalID, level: returnedRiskLevel } = await sendRequest(token, requestData);
+        if (evaluationLevelStats.hasOwnProperty(returnedRiskLevel)) {
+          evaluationLevelStats[returnedRiskLevel]++;
+        } else {
+          evaluationLevelStats.UNKNOWN++;
+        }
+
         if (!riskEvalID) {
           console.error(`❌ Risk Evaluation POST failed for ${username}. Skipping PUT request.`);
           return;
@@ -624,6 +620,9 @@ const main = async () => {
 
     // ✅ Run in parallel batches
     await runInBatches(selectedUsernames, concurrentLimit);
+
+    console.log('\n📊 Evaluation Result Summary (from PingOne responses):');
+    console.table(evaluationLevelStats);
 
     console.log('✅ All requests processed in parallel.');
   } catch (error) {
