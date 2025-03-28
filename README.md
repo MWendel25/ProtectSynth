@@ -85,10 +85,11 @@ Ensure you have the necessary environment variables configured in a `.env` file:
 | `RISK_POLICY_ID` | The ID of the risk policy being applied. | `"1ab23c4d-e5ff-678g-901h-ij2kl34567m"` |
 | `INCLUDE_BADACTORS` | Whether to include simulated bad actors in the dataset. When true this sends in a bad IP address 20% of the time. | `true` / `false` |
 | `INCLUDE_SUSPICIOUS_DEVICE` | Whether to include simulated suspicious devices in the dataset. When true this sends in a suspicious devices 20% of the time. | `true` / `false` |
-| `NUMBER_OF_TOTAL_RUNS` | Total number of runs to be executed. | `1000` |
 | `NUMBER_OF_CONCURRENT_RUNS` | Number of concurrent processes running at a time. Recommendation is between 0 and 40, moving to 50 starts to get some timeouts on a standard machine. | `20` (Recommended: 20 - 40) |
+| `NUMBER_OF_TOTAL_RUNS` | Total number of runs to be executed. | `1000` |
 | `DEBUG` | Enables debugging mode for logging additional information, such as the POST and PUT information from each Protect call. | `true` / `false` |
 | `INCLUDE_SDK` | Determines if the SDK should be included in requests. If false, all the information will be sent simply without the signals generated. | `true` / `false` |
+| `USER_SOURCE` | Determines the user file and structure used. Accepts `internal` or `external`. When set to `external`, it reads from `external_Users` and sends user type `EXTERNAL`; otherwise, it defaults to internal users and uses type `PING_ONE`. | `internal` / `external` |
 | `PROCESS_USERS_SEQUENTIALLY` | If `true`, processes users sequentially rather than randomly, ensuring each user is used for the specified number of runs. | `true` / `false` |
 | `FORCED_RISK_LEVEL` | Controls risk levels assigned to users. Acceptable values: `LOW`, `MEDIUM`, `HIGH`, or `"true"` for random per request. If `"false"`, `inducerisk` is removed from the request. | `"LOW"`, `"MEDIUM"`, `"HIGH"`, `"true"`, `"false"` |
 
@@ -100,31 +101,13 @@ CLIENT_SECRET="yourClientSecret"
 RISK_POLICY_ID="yourRiskPolicyId"
 INCLUDE_BADACTORS=boolean
 INCLUDE_SUSPICIOUS_DEVICE=boolean
-NUMBER_OF_TOTAL_RUNS=INT
 NUMBER_OF_CONCURRENT_RUNS=INT #Recommended around 20 - 40
+NUMBER_OF_TOTAL_RUNS=INT
 DEBUG=boolean
 INCLUDE_SDK=boolean
+USER_SOURCE=internal | external
 PROCESS_USERS_SEQUENTIALLY=boolean
 FORCED_RISK_LEVEL=LOW | MEDIUM | HIGH | true | false
-```
-
-### **Modifying User Type in Requests**
-To change between **internal and external users** in the request, modify the `sdkRequestData.json` file:
-
-- **For External Users**:
-```json
-"user": {
-    "id": "{USER_ID}",
-    "type": "EXTERNAL"
-}
-```
-
-- **For PingOne Users**:
-```json
-"user": {
-    "name": "{USER_ID}",
-    "type": "PING_ONE"
-}
 ```
 
   ### **Tracking User Profiles in Requests**

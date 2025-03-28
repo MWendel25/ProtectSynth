@@ -504,27 +504,24 @@ const main = async () => {
     const badActors = process.env.INCLUDE_BADACTORS === 'true';
     const processSequentially = process.env.PROCESS_USERS_SEQUENTIALLY === 'true'; // ✅ New control variable
 
-    // ✅ Fetch usernames first
-    const internalUsers = await fs.readFile(path.join(__dirname, '../data/internal_Users'), 'utf-8')
-      .then(content => content.split('\n').filter(line => line.trim() !== ''));
+    // ✅ Determine which user set to use
+    const userSource = process.env.USER_SOURCE === 'external' ? 'external_Users' : 'internal_Users';
+    const userFilePath = path.join(__dirname, `../data/${userSource}`);
 
-    // ✅ Select `numberToLoad` random users
-    // const selectedUsernames = Array.from({ length: numberToLoad }, () =>
-    //   internalUsers[Math.floor(Math.random() * internalUsers.length)]
-    // );
+    // ✅ Fetch usernames from the selected file
+    const users = await fs.readFile(userFilePath, 'utf-8')
+      .then(content => content.split('\n').filter(line => line.trim() !== ''));
 
     let selectedUsernames;
     if (processSequentially) {
-      // ✅ Process users in exact order from the list (first to last)
-      selectedUsernames = internalUsers.slice(0, numberToLoad);
-      console.log("🔹 Processing users **sequentially** from front to back.");
+      selectedUsernames = users.slice(0, numberToLoad);
+      console.log(`🔹 Processing ${userSource} **sequentially** from front to back.`);
     } else {
-      // ✅ Process users randomly
       selectedUsernames = Array.from({ length: numberToLoad }, () =>
-        internalUsers[Math.floor(Math.random() * internalUsers.length)]
+        users[Math.floor(Math.random() * users.length)]
       );
-      console.log("🎲 Processing users in **randomized order**.");
-    }
+      console.log(`🎲 Processing ${userSource} in **randomized order**.`);
+}
 
     // ✅ Get or create user profiles
     const userProfiles = await getOrCreateUserProfiles(selectedUsernames);
@@ -579,6 +576,21 @@ const main = async () => {
         logDebug('Replacements:', replacements);
 
         const requestData = await loadRequestData(path.join(__dirname, '../data/sdkRequestData.json'), replacements);
+
+        // ✅ Handle dynamic user object for internal vs external users
+        const userSourceType = process.env.USER_SOURCE === 'external' ? 'external' : 'internal';
+
+        if (userSourceType === 'external') {
+          requestData.event.user = {
+            id: username,
+            type: 'EXTERNAL'
+          };
+        } else {
+          requestData.event.user = {
+            name: username,
+            type: 'PING_ONE'
+          };
+        }
 
         // ✅ Ensure requestData is a string before applying `.replace()`
         if (riskLevel === "false") {
