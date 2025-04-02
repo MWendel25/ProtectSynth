@@ -332,20 +332,22 @@ const generateFingerprint = async (username) => {
       })
     });
 
-    // ✅ Spoof Timezone with Random Selection (Only 20% of the time)
-    const suspiciousTimezones = [
-      'Pacific/Kiritimati', // GMT+14 (Most advanced timezone)
-      'Asia/Kathmandu',      // GMT+5:45 (Only timezone with a 45-minute offset)
-      'Antarctica/Troll',    // GMT+2 (Used in Antarctica)
-      'Africa/Ouagadougou',  // GMT+0 (Less common but legitimate)
-      'Indian/Chagos',       // GMT+6 (Small islands in Indian Ocean)
-      'Asia/Pyongyang',      // GMT+8.5 (North Korea, unique offset)
-      'Pacific/Niue'         // GMT-11 (Near last timezone of the day)
-    ];
-    const randomTimezone = suspiciousTimezones[Math.floor(Math.random() * suspiciousTimezones.length)];
-    Object.defineProperty(Intl.DateTimeFormat.prototype, 'resolvedOptions', {
-      get: () => () => ({ timeZone: shouldUseSuspiciousDevice ? randomTimezone : 'America/New_York' })
-    });
+    // ✅ Spoof Timezone with Random Selection (Only for suspicious devices)
+    if (shouldUseSuspiciousDevice) {
+      const suspiciousTimezones = [
+        'Pacific/Kiritimati',
+        'Asia/Kathmandu',
+        'Antarctica/Troll',
+        'Africa/Ouagadougou',
+        'Indian/Chagos',
+        'Asia/Pyongyang',
+        'Pacific/Niue'
+      ];
+      const randomTimezone = suspiciousTimezones[Math.floor(Math.random() * suspiciousTimezones.length)];
+      Object.defineProperty(Intl.DateTimeFormat.prototype, 'resolvedOptions', {
+        get: () => () => ({ timeZone: randomTimezone })
+      });
+    }
 
     // ✅ Spoof screen properties
     Object.defineProperty(screen, 'width', { get: () => shouldUseSuspiciousDevice ? 5000 : 1920 });
@@ -511,7 +513,7 @@ const main = async () => {
         users[Math.floor(Math.random() * users.length)]
       );
       console.log(`🎲 Processing ${userSource} in **randomized order**.`);
-}
+    }
 
     // ✅ Get or create user profiles
     const userProfiles = await getOrCreateUserProfiles(selectedUsernames);
@@ -536,19 +538,19 @@ const main = async () => {
           fingerprintData = await generateFingerprint(username);
         }
 
-         // Determine risk level based on FORCED_RISK_LEVEL
-         let riskLevel = process.env.FORCED_RISK_LEVEL;
+        // Determine risk level based on FORCED_RISK_LEVEL
+        let riskLevel = process.env.FORCED_RISK_LEVEL;
 
-         // ✅ If FORCED_RISK_LEVEL is true, generate a new risk level per request
-         const getRiskLevelForRequest = () => {
-           if (process.env.FORCED_RISK_LEVEL === 'true') {
-             const riskLevels = ['LOW', 'MEDIUM', 'HIGH'];
-             const selectedRisk = riskLevels[Math.floor(Math.random() * riskLevels.length)];
-             // console.log(`🔍 Selected Risk Level: ${selectedRisk}`); // ✅ Debugging output
-             return selectedRisk;
-           }
-           return riskLevel; // ✅ Uses the fixed value if set to LOW, MEDIUM, or HIGH
-         };
+        // ✅ If FORCED_RISK_LEVEL is true, generate a new risk level per request
+        const getRiskLevelForRequest = () => {
+          if (process.env.FORCED_RISK_LEVEL === 'true') {
+            const riskLevels = ['LOW', 'MEDIUM', 'HIGH'];
+            const selectedRisk = riskLevels[Math.floor(Math.random() * riskLevels.length)];
+            // console.log(`🔍 Selected Risk Level: ${selectedRisk}`); // ✅ Debugging output
+            return selectedRisk;
+          }
+          return riskLevel; // ✅ Uses the fixed value if set to LOW, MEDIUM, or HIGH
+        };
 
         const replacements = {
           IP: eventIp,
