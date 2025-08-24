@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PingOne Protect SDK Puppeteer Test</title>
     <script
-        src="https://apps.pingone.com/signals/web-sdk/5.4.0/signals-sdk.js"
+        src="https://apps.pingone.com/signals/web-sdk/5.6.0/signals-sdk.js"
         defer>
     </script>
 </head>
@@ -35,7 +35,7 @@
                         // Optional configurations:
                         behavioralDataCollection: true,
                         // disableTags: true,
-                        universalDeviceIdentification: false
+                        universalDeviceIdentification: true
                     }).then(() => {
                         console.log("PingOne Signals initialized successfully");
                         resolve("SDK initialized successfully");

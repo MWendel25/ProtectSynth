@@ -369,8 +369,10 @@ const generateFingerprint = async (username) => {
   }, realUserAgent, isAppleSilicon, fakeHardwareConcurrency, fakeDeviceMemory, fakeGPU, includeSuspiciousDevice);
 
   try {
-    logDebug('Loading test.html...');
-    const htmlPath = `file://${path.resolve(__dirname, '../test.html')}`;
+    const TEST_DOMAIN = process.env.TEST_DOMAIN || 'localhost';
+    const TEST_PORT = process.env.TEST_PORT || '3000'; // Use main server port by default
+    const htmlPath = `http://${TEST_DOMAIN}:${TEST_PORT}/test`;
+    logDebug(`Loading test.html from ${TEST_DOMAIN}:${TEST_PORT}...`);
     await page.goto(htmlPath, { waitUntil: 'networkidle0' });
 
     // ✅ Wait for SDK to be ready
@@ -574,7 +576,8 @@ const main = async () => {
 
         if (userSourceType === 'external') {
           requestData.event.user = {
-            id: username,
+            id: userProfile.email,
+            name: userProfile.email,
             type: 'EXTERNAL'
           };
         } else {

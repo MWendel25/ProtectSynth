@@ -4,12 +4,16 @@
   "description": "A Node.js script to generate random data and send API requests for Synthetic PingOne Protect Data.",
   "main": "scripts/sendData.js",
   "scripts": {
-    "start": "node scripts/sendData.js"
+    "start": "node start.js",
+    "server": "node server.js",
+    "dev": "node server.js",
+    "data": "node scripts/sendData.js"
   },
   "dependencies": {
     "axios": "^1.7.4",
     "base-64": "^1.0.0",
     "dotenv": "^16.4.5",
+    "express": "^5.1.0",
     "ghost-cursor": "^1.3.0",
     "p-limit": "^6.1.0",
     "puppeteer": "^24.2.0",

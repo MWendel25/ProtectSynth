@@ -35,14 +35,40 @@ npm install
 ```
 
 ## Usage
-To start the application, use:
+
+### Running the Local Server
+To run the project with a local server (recommended for testing), use:
+```sh
+npm run server
+# or
+npm run dev
+```
+
+This will start a local server at `http://localhost:3000` where you can access your test pages with a proper domain instead of using the file system.
+
+**Access Points:**
+- **Data Generator**: Uses `http://localhost:3000` (reliable for automation)
+- **Manual Testing**: `http://protect.test.com:3000` (custom domain for realistic testing)
+- **Direct Access**: `http://localhost:3000` (main server)
+
+**Environment Variables:**
+- `TEST_DOMAIN`: Custom domain name (default: `localhost`)
+- `TEST_PORT`: Server port (default: `3000`)
+
+### Running the Data Generator
+To start the main data generation application, use:
 ```sh
 npm start
 ```
 
+This will automatically:
+1. Check if the server is running
+2. Start the server if it's not running
+3. Run the data generator
+
 Or, if applicable, run specific scripts:
 ```sh
-node sendData.js
+node scripts/sendData.js
 ```
 ### Setting Up PingOne Worker Application
 To integrate ProtectSynth with PingOne, follow these steps to create a **Worker Application** and configure it correctly:
