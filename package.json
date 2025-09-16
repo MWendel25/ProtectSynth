@@ -10,7 +10,7 @@
     "data": "node scripts/sendData.js"
   },
   "dependencies": {
-    "axios": "^1.7.4",
+    "axios": "^1.12.0",
     "base-64": "^1.0.0",
     "dotenv": "^16.4.5",
     "express": "^5.1.0",
