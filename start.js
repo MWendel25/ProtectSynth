@@ -1,10 +1,13 @@
 const { spawn } = require('child_process');
 const http = require('http');
 
+const DOMAIN = process.env.DOMAIN || 'localhost';
+const PORT = process.env.PORT || 3000;
+
 // Check if server is running
 function checkServer() {
   return new Promise((resolve) => {
-    const req = http.get('http://localhost:3000/health', (res) => {
+    const req = http.get(`http://${DOMAIN}:${PORT}/health`, (res) => {
       if (res.statusCode === 200) {
         resolve(true);
       } else {
