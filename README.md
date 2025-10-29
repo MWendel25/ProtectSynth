@@ -17,21 +17,57 @@ Once created, this profile is used for all subsequent requests, ensuring that th
 This script will open a browser to generate **signals data** for each user evaluation based on their profile, making the user appear as realistic as possible. You can then manually sign in from your local machine or another device to simulate a differing attempt for the same user.
 
 Additionally, the script provides options to introduce **randomized behavior** using environment variables:
-- **`INCLUDE_BADACTORS`**: At a 20% interval, assigns a bad IP address to the user. *(This interval can be adjusted at **line 533** in `sendData.js`.)*
-- **`INCLUDE_SUSPICIOUS_DEVICE`**: At a 20% interval, alters browser fingerprints to generate a suspicious device profile. *(This interval can be adjusted at **line 278** in `sendData.js`.)*
+- **`INCLUDE_BADACTORS`**: At a 2% interval, assigns a bad IP address to the user. *(This interval can be adjusted at **line 1009** in `sendData.js`.)*
+- **`INCLUDE_SUSPICIOUS_DEVICE`**: When enabled, alters browser fingerprints to generate a suspicious device profile with various detection-evasion techniques.
 - **`INCLUDE_SDK`**: If set to `false`, the script will send data **without** generating browser signals, allowing for direct data injection without behavioral tracking.
 - **`FORCED_RISK_LEVEL`**: Controls risk levels assigned to users. When set to `LOW`, `MEDIUM`, or `HIGH`, it forces that risk level. If set to `"true"`, a random risk level is assigned per request. If `"false"`, the `inducerisk` field is removed. *(This logic is handled dynamically in `sendData.js`.)*
+- **`PROCESS_USERS_SEQUENTIALLY`**: When enabled, processes users in sequential order rather than randomly, cycling through the user list.
+
+### Advanced Features
+
+**Human-like Behavior Simulation:**
+- **Realistic Typing Patterns**: Variable typing speeds, typos, corrections, and natural pauses
+- **Mouse Movement**: Bezier curve-based mouse movements with micro-adjustments
+- **Page Exploration**: Random scrolling, focus changes, and attention patterns
+- **Browser Fingerprinting**: Dynamic User-Agent generation per browser type
+
+**Suspicious Device Detection Evasion:**
+- **Hardware Spoofing**: Modified CPU cores, memory, and GPU information
+- **WebGL Fingerprinting**: Customized WebGL vendor and renderer information
+- **Connection Properties**: Altered network connection characteristics
+- **Plugin and MIME Type Manipulation**: Modified browser plugin signatures
+- **Performance Timing**: Randomized performance.now() values
+- **Screen Properties**: Customized screen dimensions and color depth
+
+**Multi-Browser Support:**
+- **Random Browser Assignment**: Each user is randomly assigned a browser from: Chromium, Firefox, WebKit, Chrome
+- **Chromium/Chrome**: Full feature support with advanced flags
+- **Firefox**: Complete compatibility with Gecko engine
+- **WebKit/Safari**: Safari browser simulation
+- **Edge**: Microsoft Edge channel support (via fallback environment variable)
 
 ## Limitations
 - ⚠ **Bot Detection Limitation**: This logic does **not** fool the **Bot Detected Predictor**. When utilizing this tool, it is recommended to leave this predictor **off** your policy.
 - ⚠ **Suspicious Device Limitation**: This logic does **not** currently sign the SDK Payload. When utilizing this tool, it is recommended to leave **Signed SDK Payload is Required** **disabled** on your predictor.
+- ⚠ **Browser Dependencies**: Requires Playwright browsers to be installed. Use `npm run setup-browsers` to install them.
+- ⚠ **Concurrency Limits**: Recommended concurrent runs are between 20-40. Higher values may cause timeouts.
 
-ProtectSynth is built using **Node.js** and supports various integrations for efficient data processing.
+ProtectSynth is built using **Node.js** with **Playwright** for browser automation and **Express** for local server functionality, supporting various integrations for efficient data processing.
 
 ## Installation
 To install dependencies, run:
 ```sh
 npm install
+```
+
+To install Playwright browsers and dependencies:
+```sh
+npm run setup-browsers
+```
+
+To install specific browser channels (Chrome, Edge):
+```sh
+npm run install-channels
 ```
 
 ## Usage
@@ -50,10 +86,18 @@ This will start a local server at `http://localhost:3000` where you can access y
 - **Data Generator**: Uses `http://localhost:3000` (reliable for automation)
 - **Manual Testing**: `http://protect.test.com:3000` (custom domain for realistic testing)
 - **Direct Access**: `http://localhost:3000` (main server)
+- **Health Check**: `http://localhost:3000/health` (server status)
+
+**Server Features:**
+- **Static File Serving**: Serves all project files from the root directory
+- **Test Page**: Provides a dedicated test page at `/test` for SDK integration
+- **Health Monitoring**: Built-in health check endpoint for server status
+- **Custom Domain Support**: Configurable domain mapping for realistic testing
 
 **Environment Variables:**
-- `TEST_DOMAIN`: Custom domain name (default: `localhost`)
-- `TEST_PORT`: Server port (default: `3000`)
+- `DOMAIN`: Custom domain name (default: `localhost`)
+- `PORT`: Server port (default: `3000`)
+- `HOST`: Server host (default: `0.0.0.0`)
 
 ### Running the Data Generator
 To start the main data generation application, use:
@@ -68,8 +112,14 @@ This will automatically:
 
 Or, if applicable, run specific scripts:
 ```sh
+npm run data
+# or
 node scripts/sendData.js
 ```
+
+### Additional Scripts
+- `npm run setup-browsers` - Install Playwright browsers and dependencies
+- `npm run install-channels` - Install specific browser channels (Chrome, Edge)
 ### Setting Up PingOne Worker Application
 To integrate ProtectSynth with PingOne, follow these steps to create a **Worker Application** and configure it correctly:
 
@@ -118,6 +168,8 @@ Ensure you have the necessary environment variables configured in a `.env` file:
 | `USER_SOURCE` | Determines the user file and structure used. Accepts `internal` or `external`. When set to `external`, it reads from `external_Users` and sends user type `EXTERNAL`; otherwise, it defaults to internal users and uses type `PING_ONE`. | `internal` / `external` |
 | `PROCESS_USERS_SEQUENTIALLY` | If `true`, processes users sequentially rather than randomly, ensuring each user is used for the specified number of runs. | `true` / `false` |
 | `FORCED_RISK_LEVEL` | Controls risk levels assigned to users. Acceptable values: `LOW`, `MEDIUM`, `HIGH`, or `"true"` for random per request. If `"false"`, `inducerisk` is removed from the request. | `"LOW"`, `"MEDIUM"`, `"HIGH"`, `"true"`, `"false"` |
+| `DOMAIN` | Custom domain for testing (used with host-resolver-rules). | `localhost` |
+| `TEST_PORT` | Port for the test server (default: `3000`). | `3000` |
 
 Here is an example of an .env file
 ```
@@ -134,6 +186,8 @@ INCLUDE_SDK=boolean
 USER_SOURCE=internal | external
 PROCESS_USERS_SEQUENTIALLY=boolean
 FORCED_RISK_LEVEL=LOW | MEDIUM | HIGH | true | false
+DOMAIN=localhost
+TEST_PORT=3000
 ```
 
   ### **Tracking User Profiles in Requests**
@@ -142,11 +196,23 @@ The `user_profile.json` file is used to track user and device data across iterat
 ## Project Structure
 ```
 ProtectSynth/
-├── data/               # Contains datasets
-├── sendDataWithSDKClean.js  # Main logic script
-├── package.json        # Node.js package configuration
-├── .vscode/            # VS Code settings (if applicable)
-└── README.md           # Project documentation
+├── data/                    # Contains datasets and configuration files
+│   ├── external_Users       # External user list
+│   ├── internal_Users       # Internal user list
+│   ├── ips_*               # Various IP address pools (Amazon, Apple, Cloudflare, etc.)
+│   ├── mail_Domains        # Email domain list
+│   ├── names               # Name list for user generation
+│   ├── requestData.json    # Legacy request template
+│   ├── sdkRequestData.json # SDK-enabled request template
+│   └── user_profiles.json  # Generated user profiles
+├── scripts/
+│   └── sendData.js         # Main data generation script
+├── server.js               # Express server for local testing
+├── start.js                # Application entry point
+├── test.html               # Test page for SDK integration
+├── launch.json             # VS Code debug configuration
+├── package.json            # Node.js package configuration
+└── README.md               # Project documentation
 ```
 
 ## Contributing
