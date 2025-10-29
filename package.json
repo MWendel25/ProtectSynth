@@ -7,6 +7,7 @@
     "start": "node start.js",
     "server": "node server.js",
     "dev": "node server.js",
+    "stop": "kill $(lsof -ti:3000) 2>/dev/null || echo 'No server running on port 3000'",
     "data": "node scripts/sendData.js",
     "postinstall": "npx playwright install",
     "setup-browsers": "npx playwright install && npx playwright install-deps",
