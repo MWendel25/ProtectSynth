@@ -3,13 +3,14 @@
 ## Overview
 ProtectSynth is a tool designed to assist with sending sample data into the PingOne Protect console. It is intended for demonstration and learning around the **Threat Protection** dashboard, policy tuning, and realistic sample data generation.
 
-This tool utilizes the files under the `data/` directory to create and maintain user profiles in `user_profiles.json`. Upon a user’s first interaction, a profile is generated containing details such as:
+This tool utilizes the files under the `data/` directory to create and maintain user profiles in `user_profiles.json`. Upon a user's first interaction, a profile is generated containing details such as:
 - **Username**
 - **First Name & Last Name**
 - **Email**
 - **User Agent** (browser details)
 - **Device ID**
 - **IP Address**
+- **Operating System** (Windows, macOS, Linux)
 
 Once created, this profile is used for all subsequent requests, ensuring that the user appears to come from the same device and location—helping to build a consistent model for evaluation.
 
@@ -29,7 +30,8 @@ Additionally, the script provides options to introduce **randomized behavior** u
 - **Realistic Typing Patterns**: Variable typing speeds, typos, corrections, and natural pauses
 - **Mouse Movement**: Bezier curve-based mouse movements with micro-adjustments
 - **Page Exploration**: Random scrolling, focus changes, and attention patterns
-- **Browser Fingerprinting**: Dynamic User-Agent generation per browser type
+- **Browser Fingerprinting**: Dynamic User-Agent generation per browser type and OS
+- **OS Assignment**: Random operating system assignment (Windows, macOS, Linux) per user profile
 
 **Suspicious Device Detection Evasion:**
 - **Hardware Spoofing**: Modified CPU cores, memory, and GPU information

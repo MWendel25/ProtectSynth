@@ -128,6 +128,9 @@ const getOrCreateUserProfiles = async (usernames) => {
 
   // Available browsers for random assignment
   const availableBrowsers = ['firefox', 'webkit', 'chrome', 'msedge'];
+  
+  // Available operating systems for random assignment
+  const availableOS = ['Windows', 'macOS', 'Linux'];
 
   // ✅ Load existing user profiles if the file exists
   try {
@@ -163,10 +166,12 @@ const getOrCreateUserProfiles = async (usernames) => {
     .then(content => content.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#')));
   const torIps = await fs.readFile(path.join(__dirname, '../data/ips_Tor'), 'utf-8')
     .then(content => content.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#')));
+    const usIps = await fs.readFile(path.join(__dirname, '../data/ips_US'), 'utf-8')
+    .then(content => content.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#')));
   const zscalerIps = await fs.readFile(path.join(__dirname, '../data/ips_Zscaler'), 'utf-8')
     .then(content => content.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#')));
-  const allIps = [...appleIps, ...amazonIps, ...cloudFlareIps, ...comcastIps, ...zscalerIps];
-  // const allIps = [...amazonIps];
+  // const allIps = [...appleIps, ...amazonIps, ...cloudFlareIps, ...comcastIps, ...zscalerIps];
+  const allIps = [...usIps];
 
   let updated = false;
 
@@ -182,6 +187,13 @@ const getOrCreateUserProfiles = async (usernames) => {
         console.log(`🔹 Assigned new deviceID for ${username}: ${userProfiles[username].deviceID}`);
       }
 
+      // ✅ Add OS if missing from existing profile
+      if (!userProfiles[username].os) {
+        userProfiles[username].os = availableOS[Math.floor(Math.random() * availableOS.length)];
+        updated = true;
+        console.log(`🔹 Assigned new OS for ${username}: ${userProfiles[username].os}`);
+      }
+
     } else {
       // ✅ Generate new user profile
       const name = names[Math.floor(Math.random() * names.length)];
@@ -189,6 +201,7 @@ const getOrCreateUserProfiles = async (usernames) => {
       const ip = allIps[Math.floor(Math.random() * allIps.length)];
       const email = `${name.replace(/ /g, '.')}@${mailDomain}`;
       const browser = availableBrowsers[Math.floor(Math.random() * availableBrowsers.length)];
+      const os = availableOS[Math.floor(Math.random() * availableOS.length)];
 
       userProfiles[username] = {
         user: username,
@@ -196,10 +209,11 @@ const getOrCreateUserProfiles = async (usernames) => {
         email: email,
         ip: ip,
         deviceID: generateDeviceID(),
-        browser: browser
+        browser: browser,
+        os: os
       };
       updated = true;
-      console.log(`✅ New user profile created: ${username} with browser: ${browser}`);
+      console.log(`✅ New user profile created: ${username} with browser: ${browser} and OS: ${os}`);
     }
   }
 
@@ -302,6 +316,42 @@ const updateRiskEvaluation = async (token, riskEvalID) => {
 //   }
 // };
 
+// Function to generate realistic User-Agent based on browser and platform
+const generateUserAgent = (browserName, platform) => {
+  const userAgents = {
+    'chromium': {
+      'Win32': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'MacIntel': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Linux x86_64': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    },
+    'chrome': {
+      'Win32': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'MacIntel': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Linux x86_64': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    },
+    'firefox': {
+      'Win32': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+      'MacIntel': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0',
+      'Linux x86_64': 'Mozilla/5.0 (X11; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0'
+    },
+    'webkit': {
+      'MacIntel': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15',
+      'Mac': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15'
+    },
+    'edge': {
+      'Win32': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+      'MacIntel': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0'
+    },
+    'msedge': {
+      'Win32': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+      'MacIntel': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0'
+    }
+  };
+  
+  const browserUserAgents = userAgents[browserName] || userAgents['chromium'];
+  return browserUserAgents[platform] || browserUserAgents['Win32'];
+};
+
 const generateFingerprint = async (username, userProfile) => {
   const isDebug = process.env.DEBUG === 'true';
   
@@ -313,13 +363,37 @@ const generateFingerprint = async (username, userProfile) => {
   // Build base viewport first
   const baseViewport = isDebug ? null : { width: 1280, height: 800 };
   
+  // Generate platform and user agent based on user profile OS
+  const getPlatformFromOS = (os, browserName) => {
+    const osToPlatform = {
+      'Windows': 'Win32',
+      'macOS': 'MacIntel',
+      'Linux': 'Linux x86_64'
+    };
+    
+    // For Safari/WebKit, force macOS if not already
+    if (browserName === 'webkit' && os !== 'macOS') {
+      return 'MacIntel';
+    }
+    
+    return osToPlatform[os] || 'Win32';
+  };
+  
+  const userOS = userProfile?.os || 'Windows'; // Default to Windows if no OS assigned
+  const selectedPlatform = getPlatformFromOS(userOS, browserToUse);
+  const generatedUserAgent = generateUserAgent(browserToUse, selectedPlatform);
+  
   // Start with minimal context options
-  let contextOptions = { viewport: baseViewport };
+  let contextOptions = { 
+    viewport: baseViewport,
+    userAgent: generatedUserAgent
+  };
   
   // Add "suspicious profile" only when the master switch is on
   const shouldUseSuspiciousDevice = includeSuspiciousDevice; // If enabled, always use suspicious device
   
   console.log(`🔍 Suspicious device check for ${username}: includeSuspiciousDevice=${includeSuspiciousDevice}, result=${shouldUseSuspiciousDevice ? 'SUSPICIOUS' : 'NORMAL'}`);
+  console.log(`🌐 Generated User-Agent for ${browserToUse} on ${userOS} (${selectedPlatform}): ${generatedUserAgent}`);
   
   if (shouldUseSuspiciousDevice) {
     contextOptions = {
@@ -342,7 +416,7 @@ const generateFingerprint = async (username, userProfile) => {
   const page = await context.newPage();
   // Add a page-level init script for suspicious device detection
   await page.addInitScript(
-    ({ shouldUseSuspiciousDevice, userAgent, isAppleSilicon }) => {
+    ({ shouldUseSuspiciousDevice, userAgent, isAppleSilicon, selectedPlatform }) => {
       try { 
         Object.defineProperty(window, '__SUSP', { value: !!shouldUseSuspiciousDevice, configurable: false }); 
       } catch { }
@@ -355,7 +429,8 @@ const generateFingerprint = async (username, userProfile) => {
       userAgent: shouldUseSuspiciousDevice
         ? 'Mozilla/5.0 (X11; Linux i686; rv:7.0.1) Gecko/20100101 Firefox/7.0.1'
         : undefined,
-      isAppleSilicon: process.arch === 'arm64'
+      isAppleSilicon: process.arch === 'arm64',
+      selectedPlatform: selectedPlatform
     }
   );
   // const realUserAgent = await page.evaluate(() => navigator.userAgent);
@@ -378,7 +453,8 @@ const generateFingerprint = async (username, userProfile) => {
       isAppleSilicon,
       fakeHardwareConcurrency,
       fakeDeviceMemory,
-      fakeGPU
+      fakeGPU,
+      selectedPlatform
     }) => {
       // Make it visible for debugging if you like:
       try { Object.defineProperty(window, '__SUSP', { value: !!shouldUseSuspiciousDevice, configurable: false }); } catch { }
@@ -390,6 +466,16 @@ const generateFingerprint = async (username, userProfile) => {
       try { Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] }); } catch { }
       try { if (userAgent) Object.defineProperty(navigator, 'userAgent', { get: () => userAgent }); } catch { }
       try {
+        const getPlatformForUserAgentData = (platform) => {
+          const platformMap = {
+            'Win32': 'Windows',
+            'MacIntel': 'macOS',
+            'Mac': 'macOS',
+            'Linux x86_64': 'Linux'
+          };
+          return platformMap[platform] || 'Windows';
+        };
+        
         Object.defineProperty(navigator, 'userAgentData', {
           get: () => ({
             brands: [
@@ -398,17 +484,16 @@ const generateFingerprint = async (username, userProfile) => {
               { brand: "Not A;Brand", version: "99" }
             ],
             mobile: false,
-            platform: "MacOS"
+            platform: getPlatformForUserAgentData(selectedPlatform)
           })
         });
       } catch { }
 
-      // Platform mismatch
+      // Platform assignment - use the selected platform
       try {
-        const suspiciousPlatforms = ["Linux", "Win32"];
         const fakePlatform = shouldUseSuspiciousDevice
-          ? suspiciousPlatforms[Math.floor(Math.random() * suspiciousPlatforms.length)]
-          : (isAppleSilicon ? "Mac" : "MacIntel");
+          ? ["Linux", "Win32"][Math.floor(Math.random() * 2)]
+          : selectedPlatform;
         Object.defineProperty(navigator, 'platform', { get: () => fakePlatform });
       } catch { }
 
@@ -591,7 +676,8 @@ const generateFingerprint = async (username, userProfile) => {
       isAppleSilicon,
       fakeHardwareConcurrency,
       fakeDeviceMemory,
-      fakeGPU
+      fakeGPU,
+      selectedPlatform
     }
   );
 
