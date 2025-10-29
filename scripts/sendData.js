@@ -127,7 +127,7 @@ const getOrCreateUserProfiles = async (usernames) => {
   const includeSDK = process.env.INCLUDE_SDK === 'true';
 
   // Available browsers for random assignment
-  const availableBrowsers = ['chromium', 'firefox', 'webkit', 'chrome'];
+  const availableBrowsers = ['firefox', 'webkit', 'chrome', 'msedge'];
 
   // ✅ Load existing user profiles if the file exists
   try {
@@ -152,19 +152,19 @@ const getOrCreateUserProfiles = async (usernames) => {
 
   // // ✅ Select a real IP from valid pools
   const amazonIps = await fs.readFile(path.join(__dirname, '../data/ips_Amazon'), 'utf-8')
-    .then(content => content.split('\n').filter(line => line.trim() !== ''));
+    .then(content => content.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#')));
   const appleIps = await fs.readFile(path.join(__dirname, '../data/ips_Apple'), 'utf-8')
-    .then(content => content.split('\n').filter(line => line.trim() !== ''));
+    .then(content => content.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#')));
   const cloudFlareIps = await fs.readFile(path.join(__dirname, '../data/ips_Cloudflare'), 'utf-8')
-    .then(content => content.split('\n').filter(line => line.trim() !== ''));
+    .then(content => content.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#')));
   const comcastIps = await fs.readFile(path.join(__dirname, '../data/ips_Comcast'), 'utf-8')
-    .then(content => content.split('\n').filter(line => line.trim() !== ''));
+    .then(content => content.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#')));
   const proxyIps = await fs.readFile(path.join(__dirname, '../data/ips_Proxies'), 'utf-8')
-    .then(content => content.split('\n').filter(line => line.trim() !== ''));
+    .then(content => content.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#')));
   const torIps = await fs.readFile(path.join(__dirname, '../data/ips_Tor'), 'utf-8')
-    .then(content => content.split('\n').filter(line => line.trim() !== ''));
+    .then(content => content.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#')));
   const zscalerIps = await fs.readFile(path.join(__dirname, '../data/ips_Zscaler'), 'utf-8')
-    .then(content => content.split('\n').filter(line => line.trim() !== ''));
+    .then(content => content.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#')));
   const allIps = [...appleIps, ...amazonIps, ...cloudFlareIps, ...comcastIps, ...zscalerIps];
   // const allIps = [...amazonIps];
 
@@ -268,39 +268,39 @@ const updateRiskEvaluation = async (token, riskEvalID) => {
   }
 };
 
-const sendRiskEvaluationFeedback = async (token, riskEvalID, createdAt) => {
-  const headers = {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  };
+// const sendRiskEvaluationFeedback = async (token, riskEvalID, createdAt) => {
+//   const headers = {
+//     Authorization: `Bearer ${token}`,
+//     'Content-Type': 'application/json',
+//   };
 
-  const feedbackData = {
-    evaluationFeedbackItems: [
-      {
-        riskEvaluation: {
-          id: riskEvalID,
-          createdAt: createdAt
-        },
-        feedbackCategory: "FRIENDLY_BOT",
-        reason: "INTERNAL_AUTOMATION"
-      }
-    ]
-  };
+//   const feedbackData = {
+//     evaluationFeedbackItems: [
+//       {
+//         riskEvaluation: {
+//           id: riskEvalID,
+//           createdAt: createdAt
+//         },
+//         feedbackCategory: "FRIENDLY_BOT",
+//         reason: "INTERNAL_AUTOMATION"
+//       }
+//     ]
+//   };
 
-  try {
-    const url = `https://api.pingone.com/v1/environments/${process.env.ENVID}/riskFeedback`;
-    const response = await axios.post(url, feedbackData, { headers });
+//   try {
+//     const url = `https://api.pingone.com/v1/environments/${process.env.ENVID}/riskFeedback`;
+//     const response = await axios.post(url, feedbackData, { headers });
 
-    logDebug('Feedback Response:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error(
-      'Error sending risk evaluation feedback:',
-      error.response ? error.response.data : error.message
-    );
-    return null;
-  }
-};
+//     logDebug('Feedback Response:', response.data);
+//     return response.data;
+//   } catch (error) {
+//     console.error(
+//       'Error sending risk evaluation feedback:',
+//       error.response ? error.response.data : error.message
+//     );
+//     return null;
+//   }
+// };
 
 const generateFingerprint = async (username, userProfile) => {
   const isDebug = process.env.DEBUG === 'true';
@@ -1008,7 +1008,7 @@ const main = async () => {
         let eventIp = userProfile.ip;
         if (badActors && Math.random() < 0.02) { // 02% chance
           const badIps = await fs.readFile(path.join(__dirname, '../data/ips_Bad'), 'utf-8')
-            .then(content => content.split('\n').filter(line => line.trim() !== ''));
+            .then(content => content.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#')));
           eventIp = badIps[Math.floor(Math.random() * badIps.length)];
           console.log(`⚠️ Using temporary bad IP for event: ${eventIp}`);
         }
@@ -1087,14 +1087,14 @@ const main = async () => {
         await updateRiskEvaluation(token, riskEvalID);
 
         // Send feedback after successful PUT (optional)
-        if (createdAt) {
-          try {
-            await sendRiskEvaluationFeedback(token, riskEvalID, createdAt);
-            console.log(`📝 Feedback sent for Risk EvalId: ${riskEvalID}`);
-          } catch (feedbackError) {
-            console.log(`⚠️  Feedback failed for Risk EvalId: ${riskEvalID} - continuing without feedback`);
-          }
-        }
+        // if (createdAt) {
+        //   try {
+        //     await sendRiskEvaluationFeedback(token, riskEvalID, createdAt);
+        //     console.log(`📝 Feedback sent for Risk EvalId: ${riskEvalID}`);
+        //   } catch (feedbackError) {
+        //     console.log(`⚠️  Feedback failed for Risk EvalId: ${riskEvalID} - continuing without feedback`);
+        //   }
+        // }
 
         console.log(`✅ Processed user: ${username} - Risk EvalId: ${riskEvalID}`);
       } catch (err) {
