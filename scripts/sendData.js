@@ -171,7 +171,7 @@ const getOrCreateUserProfiles = async (usernames) => {
   const zscalerIps = await fs.readFile(path.join(__dirname, '../data/ips_Zscaler'), 'utf-8')
     .then(content => content.split('\n').filter(line => line.trim() !== '' && !line.trim().startsWith('#')));
   // const allIps = [...appleIps, ...amazonIps, ...cloudFlareIps, ...comcastIps, ...zscalerIps];
-  const allIps = [...usIps];
+  const allIps = [...proxyIps];
 
   let updated = false;
 
@@ -767,7 +767,9 @@ const generateFingerprint = async (username, userProfile) => {
     logDebug('Simulated interaction complete.');
 
     // ✅ Fix: Ensure _pingOneSignals.getData() is properly called within the browser context
-    const fingerprintData = await page.evaluate(async () => {
+    // Pass device ID to getData() when universalDeviceIdentification is enabled
+    const deviceId = userProfile?.deviceID || null;
+    const fingerprintData = await page.evaluate(async (deviceId) => {
       try {
         // Log suspicious device properties for debugging
         if (window.__SUSP) {
@@ -782,7 +784,14 @@ const generateFingerprint = async (username, userProfile) => {
         }
         
         if (typeof _pingOneSignals !== 'undefined' && _pingOneSignals.getData) {
-          const data = await _pingOneSignals.getData();
+          // When universalDeviceIdentification is enabled, pass deviceId to getData()
+          // Based on API format (device.externalId), SDK likely expects externalDeviceId
+          let data;
+          if (deviceId) {
+            data = await _pingOneSignals.getData({ externalDeviceId: deviceId });
+          } else {
+            data = await _pingOneSignals.getData();
+          }
           console.log("📊 Fingerprint data generated:", data.substring(0, 200) + "...");
           return data;
         } else {
@@ -793,7 +802,7 @@ const generateFingerprint = async (username, userProfile) => {
         console.error("Error getting fingerprint data:", error);
         return "{}";
       }
-    });
+    }, deviceId);
 
     // console.log('Fingerprint Data:', fingerprintData);
 

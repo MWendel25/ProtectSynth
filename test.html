@@ -47,9 +47,17 @@
             });
         }
 
-        async function generateFingerprint() {
+        async function generateFingerprint(deviceId) {
             try {
-                const fingerprintData = await _pingOneSignals.getData();
+                // When universalDeviceIdentification is enabled, pass deviceId to getData()
+                // Based on API format (device.externalId), SDK likely expects externalDeviceId
+                let fingerprintData;
+                if (deviceId) {
+                    // Try with externalDeviceId first (matches API format)
+                    fingerprintData = await _pingOneSignals.getData({ externalDeviceId: deviceId });
+                } else {
+                    fingerprintData = await _pingOneSignals.getData();
+                }
                 console.log("Fingerprint data:", fingerprintData);
                 return fingerprintData;
             } catch (e) {

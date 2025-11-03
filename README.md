@@ -24,7 +24,15 @@ Additionally, the script provides options to introduce **randomized behavior** u
 - **`FORCED_RISK_LEVEL`**: Controls risk levels assigned to users. When set to `LOW`, `MEDIUM`, or `HIGH`, it forces that risk level. If set to `"true"`, a random risk level is assigned per request. If `"false"`, the `inducerisk` field is removed. *(This logic is handled dynamically in `sendData.js`.)*
 - **`PROCESS_USERS_SEQUENTIALLY`**: When enabled, processes users in sequential order rather than randomly, cycling through the user list.
 
+**SDK Configuration:**
+- **`universalDeviceIdentification`**: Disabled by default in `test.html`. When enabled, the SDK uses device identification that is automatically synchronized with the API request's `device.externalId`. This ensures valid SDK signatures and consistent device tracking across sessions. For use when signing the SDK payload
+
 ### Advanced Features
+
+**Device Identification:**
+- **Universal Device ID**: The SDK is configured with `universalDeviceIdentification: false`, which enables consistent device tracking across sessions
+- **Automatic Synchronization**: Device IDs from user profiles are automatically passed to the SDK during initialization, ensuring the SDK signature matches the `device.externalId` in API requests
+- **Persistent Profiles**: Each user maintains the same device ID across multiple runs, stored in `user_profiles.json`
 
 **Human-like Behavior Simulation:**
 - **Realistic Typing Patterns**: Variable typing speeds, typos, corrections, and natural pauses
